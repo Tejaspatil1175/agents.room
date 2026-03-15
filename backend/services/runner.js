@@ -31,9 +31,10 @@ async function runAgent(agentId) {
 
     await Run.create({ agent_id: agentId, output, status: 'success' });
   } catch (err) {
-    console.error(`[runner] Agent ${agentId} failed:`, err.message);
+    const errorMessage = err.response ? JSON.stringify(err.response.data) : err.message;
+    console.error(`[runner] Agent ${agentId} failed:`, errorMessage);
     if (agent) {
-      await Run.create({ agent_id: agentId, output: null, status: 'fail', error_message: err.message });
+      await Run.create({ agent_id: agentId, output: null, status: 'fail', error_message: errorMessage });
     }
   }
 }
