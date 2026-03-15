@@ -1,0 +1,547 @@
+{
+  "info": {
+    "name": "AgentFlow Backend",
+    "description": "Complete API collection for AgentFlow Backend — Auth, Agents, Runs, Channels, Marketplace",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:5000/api", "type": "string" },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "agent_id", "value": "", "type": "string" },
+    { "key": "run_id", "value": "", "type": "string" },
+    { "key": "public_agent_id", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Success true', () => pm.expect(pm.response.json().success).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"testuser@example.com\",\n  \"password\": \"password123\",\n  \"timezone\": \"Asia/Kolkata\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Has token', () => pm.expect(json.data.token).to.be.a('string'));",
+                  "pm.collectionVariables.set('token', json.data.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"testuser@example.com\",\n  \"password\": \"password123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Me",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has email', () => pm.expect(pm.response.json().data.email).to.be.a('string'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/auth/me"
+          }
+        },
+        {
+          "name": "Save Groq API Key",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Success true', () => pm.expect(pm.response.json().success).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/auth/groq-key",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"groq_api_key\": \"gsk_your_personal_groq_key_here\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Groq API Key",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/auth/groq-key"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/auth/logout"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Agents",
+      "item": [
+        {
+          "name": "Create Weather Agent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.test('Has _id', () => pm.expect(json.data._id).to.be.a('string'));",
+                  "pm.collectionVariables.set('agent_id', json.data._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/agents",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Mumbai Weather Bot\",\n  \"type\": \"weather\",\n  \"config\": {\n    \"city\": \"Mumbai\",\n    \"unit\": \"metric\"\n  },\n  \"schedule_cron\": \"0 7 * * *\",\n  \"channel\": \"email\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Create News Agent",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/agents",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"AI News Digest\",\n  \"type\": \"news\",\n  \"config\": {\n    \"topic\": \"artificial intelligence\",\n    \"language\": \"en\"\n  },\n  \"schedule_cron\": \"0 8 * * *\",\n  \"channel\": \"telegram\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Research Agent",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/agents",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Quantum Research Tracker\",\n  \"type\": \"research\",\n  \"config\": {\n    \"topic\": \"quantum computing 2025\",\n    \"depth\": \"advanced\"\n  },\n  \"schedule_cron\": \"0 9 * * 1\",\n  \"channel\": \"slack\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Content Agent",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/agents",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"LinkedIn Post Generator\",\n  \"type\": \"content\",\n  \"config\": {\n    \"topic\": \"AI trends in 2025\",\n    \"format\": \"LinkedIn post\",\n    \"tone\": \"professional\"\n  },\n  \"schedule_cron\": \"0 10 * * 1\",\n  \"channel\": \"whatsapp\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get All Agents",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Data is array', () => pm.expect(pm.response.json().data).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/agents"
+          }
+        },
+        {
+          "name": "Get Agent by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/agents/{{agent_id}}"
+          }
+        },
+        {
+          "name": "Update Agent",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/agents/{{agent_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Mumbai Weather Bot (Updated)\",\n  \"config\": {\n    \"city\": \"Pune\",\n    \"unit\": \"metric\"\n  },\n  \"schedule_cron\": \"0 6 * * *\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Pause Agent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/agents/{{agent_id}}/pause"
+          }
+        },
+        {
+          "name": "Resume Agent",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/agents/{{agent_id}}/resume"
+          }
+        },
+        {
+          "name": "Run Agent Now",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Triggered', () => pm.expect(pm.response.json().success).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/agents/{{agent_id}}/run-now"
+          }
+        },
+        {
+          "name": "Delete Agent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/agents/{{agent_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Runs",
+      "item": [
+        {
+          "name": "Get Runs by Agent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Data is array', () => pm.expect(pm.response.json().data).to.be.an('array'));",
+                  "const runs = pm.response.json().data;",
+                  "if (runs.length > 0) pm.collectionVariables.set('run_id', runs[0]._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/runs/agent/{{agent_id}}"
+          }
+        },
+        {
+          "name": "Get Run by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/runs/{{run_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Channels",
+      "item": [
+        {
+          "name": "Connect Email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/channels/connect/email",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"testuser@example.com\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Connect Telegram",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/channels/connect/telegram",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chat_id\": \"123456789\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Connect WhatsApp",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/channels/connect/whatsapp",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+919876543210\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Connect Slack",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/channels/connect/slack",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"webhook_url\": \"https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Email Channel",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/channels/email"
+          }
+        },
+        {
+          "name": "Delete Telegram Channel",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/channels/telegram"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Marketplace",
+      "item": [
+        {
+          "name": "Get Marketplace",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Data is array', () => pm.expect(pm.response.json().data).to.be.an('array'));",
+                  "const agents = pm.response.json().data;",
+                  "if (agents.length > 0) pm.collectionVariables.set('public_agent_id', agents[0]._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/marketplace"
+          }
+        },
+        {
+          "name": "Publish Agent to Marketplace",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/marketplace/publish/{{agent_id}}"
+          }
+        },
+        {
+          "name": "Install Agent from Marketplace",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/marketplace/install/{{public_agent_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"schedule_cron\": \"0 8 * * *\",\n  \"channel\": \"email\"\n}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
