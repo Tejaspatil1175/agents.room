@@ -9,7 +9,10 @@ async function runResearchAgent(config, user) {
   const response = await axios.post(
     'https://api.tavily.com/search',
     { query: topic, search_depth: depth, max_results: 5 },
-    { headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' } }
+    { 
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      timeout: 15000 // 15 seconds
+    }
   );
 
   const results = response.data.results;

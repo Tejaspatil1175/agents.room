@@ -366,7 +366,28 @@ Trigger an agent to run immediately (ignores schedule).
 
 ## RUNS
 
-Run = one execution of an agent. Saved automatically every time an agent fires.
+Run = one execution of an agent (a message). Saved automatically every time an agent fires.
+
+---
+
+### GET `/runs` `AUTH`
+Get last 50 runs (messages) for all accounts belonging to the user.
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "664f1b2c8e4a2d001f3c8c33",
+      "agent_id": { "_id": "664f1b2c8e4a2d001f3c8b22", "name": "Weather Bot", "type": "weather" },
+      "status": "success",
+      "output": "It is sunny in Mumbai...",
+      "ran_at": "2025-01-15T07:00:00.000Z"
+    }
+  ]
+}
+```
 
 ---
 

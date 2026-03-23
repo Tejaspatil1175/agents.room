@@ -13,6 +13,24 @@ exports.getRunsByAgent = async (req, res, next) => {
   }
 };
 
+exports.getAllRuns = async (req, res, next) => {
+  try {
+    // Find all agents belonging to the user
+    const agents = await Agent.find({ user_id: req.user._id }).select('_id');
+    const agentIds = agents.map(a => a._id);
+
+    // Find runs (messages) for those agents
+    const runs = await Run.find({ agent_id: { $in: agentIds } })
+      .sort({ ran_at: -1 })
+      .limit(50)
+      .populate('agent_id', 'name type');
+
+    res.json({ success: true, data: runs });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.getRun = async (req, res, next) => {
   try {
     const run = await Run.findById(req.params.runId).populate('agent_id');

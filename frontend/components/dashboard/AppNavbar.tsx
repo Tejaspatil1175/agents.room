@@ -38,9 +38,10 @@ router.push("/login");
 };
 
 const navLinks = [
-{ name: "Dashboard", href: "/dashboard" },
-{ name: "Marketplace", href: "/marketplace" },
-{ name: "Settings", href: "/settings" },
+  { name: "Dashboard", href: "/dashboard" },
+  { name: "Messages", href: "/messages" },
+  { name: "Marketplace", href: "/marketplace" },
+  { name: "Settings", href: "/settings" },
 ];
 
   return (

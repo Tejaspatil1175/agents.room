@@ -88,6 +88,9 @@ export const api = {
 
   // RUNS
   runs: {
+    listAll: () =>
+      apiFetch<any>('/runs'),
+
     listByAgent: (agentId: string) =>
       apiFetch<any>(`/runs/agent/${agentId}`),
 

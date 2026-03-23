@@ -25,12 +25,40 @@ async function runAgent(agentId) {
     else throw new Error('Unknown agent type: ' + agent.type);
 
     const channel = await Channel.findOne({ user_id: agent.user_id, type: agent.channel });
-    if (!channel) throw new Error('No channel configured for type: ' + agent.channel);
-
-    await sendMessage(channel.type, channel.value, output);
+    if (channel) {
+      await sendMessage(channel.type, channel.value, output);
+    } else {
+      console.log(`[runner] Skipping external delivery for agent ${agentId} as no ${agent.channel} channel is connected.`);
+    }
 
     await Run.create({ agent_id: agentId, output, status: 'success' });
   } catch (err) {
+    // Retry once on socket hang up / ECONNRESET
+    if (err.message.includes('socket hang up') || (err.code === 'ECONNRESET')) {
+       console.log(`[runner] Retrying agent ${agentId} due to socket hang up...`);
+       try {
+         // Second attempt
+         let output;
+         const agent = await Agent.findById(agentId);
+         const user = await User.findById(agent.user_id);
+         if (agent.type === 'weather') output = await runWeatherAgent(agent.config, user);
+         else if (agent.type === 'news') output = await runNewsAgent(agent.config, user);
+         else if (agent.type === 'research') output = await runResearchAgent(agent.config, user);
+         else if (agent.type === 'content') output = await runContentAgent(agent.config, user);
+         else throw new Error('Unknown agent type');
+
+         const channel = await Channel.findOne({ user_id: agent.user_id, type: agent.channel });
+         if (channel) {
+           await sendMessage(channel.type, channel.value, output);
+         }
+         
+         await Run.create({ agent_id: agentId, output, status: 'success' });
+         return;
+       } catch (retryErr) {
+         err = retryErr;
+       }
+    }
+
     const errorMessage = err.response ? JSON.stringify(err.response.data) : err.message;
     console.error(`[runner] Agent ${agentId} failed:`, errorMessage);
     if (agent) {
