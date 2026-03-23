@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef } from "react";
 
 interface StepActivateProps {
   taskMode: "template" | "custom";
@@ -9,8 +9,6 @@ interface StepActivateProps {
   taskDescription: string;
   schedule: any;
   delivery: string | null;
-  accountDetail: string;
-  setAccountDetail: (detail: string) => void;
   agentName: string;
   setAgentName: (name: string) => void;
   isActivating: boolean;
@@ -22,27 +20,12 @@ export default function StepActivate({
   taskDescription,
   schedule,
   delivery,
-  accountDetail,
-  setAccountDetail,
   agentName,
   setAgentName,
   isActivating,
   onActivate,
 }: StepActivateProps) {
   const nameInputRef = useRef<HTMLInputElement>(null);
-
-  // Dynamic content based on delivery
-  const getDeliveryConfig = () => {
-    switch (delivery) {
-      case "whatsapp": return { label: "Your WhatsApp number", placeholder: "+91 98765 43210", helper: "We'll send a verification message", delLabel: "WhatsApp" };
-      case "email": return { label: "Your email address", placeholder: "you@gmail.com", helper: "We'll send a test email", delLabel: "Email" };
-      case "telegram": return { label: "Your Telegram username", placeholder: "@yourusername", helper: "Start a chat with @agentsroom_bot first", delLabel: "Telegram" };
-      case "slack": return { label: "Slack webhook URL", placeholder: "https://hooks.slack.com/...", helper: "Create an incoming webhook in your Slack workspace", delLabel: "Slack" };
-      default: return { label: "Account detail", placeholder: "Enter details", helper: "", delLabel: "Channel" };
-    }
-  };
-
-  const config = getDeliveryConfig();
 
   const getScheduleSummary = () => {
     const { frequency, time, timezone } = schedule;
@@ -62,24 +45,7 @@ export default function StepActivate({
     <div className="w-full flex justify-center pb-24">
       <div className="w-full max-w-xl px-6">
         
-        {/* Step 1: Account Input */}
-        <div className="mb-10">
-          <label className="block text-[14px] font-semibold text-zinc-100 mb-2 pl-1">
-            {config.label}
-          </label>
-          <input
-            type="text"
-            value={accountDetail}
-            onChange={(e) => setAccountDetail(e.target.value)}
-            placeholder={config.placeholder}
-            className="w-full h-11 bg-[#1a1a1a] border border-white/[0.08] text-zinc-100 placeholder:text-zinc-600 px-4 rounded-xl text-[14px] focus:outline-none focus:border-white/[0.2] transition-colors"
-          />
-          <p className="text-[12px] text-zinc-600 mt-2 pl-1">
-            {config.helper}
-          </p>
-        </div>
-
-        {/* Step 2: Agent Preview */}
+        {/* Step 1: Agent Summary */}
         <div className="mb-10">
           <h3 className="text-[13px] font-semibold text-zinc-500 uppercase tracking-wider mb-3 pl-1">
             Agent summary
@@ -114,38 +80,34 @@ export default function StepActivate({
               <div className="flex items-center overflow-hidden">
                 <span className="w-20 shrink-0 text-[12px] text-zinc-500">Delivery:</span>
                 <span className="text-[13px] text-zinc-300 flex items-center gap-1.5 truncate">
-                  {config.delLabel} &rarr; 
-                  {accountDetail ? (
-                    <span className="font-mono text-[12px]">{accountDetail}</span>
-                  ) : (
-                    <span className="text-zinc-600 italic">enter below</span>
-                  )}
+                  {delivery || "Direct Message"}
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="mt-4">
+          <div className="mt-6">
              <label className="block text-[12px] font-medium text-zinc-500 mb-1.5 pl-1">
-               Agent name
+                Customize Agent Name
              </label>
              <input
                ref={nameInputRef}
                type="text"
                value={agentName}
                onChange={(e) => setAgentName(e.target.value)}
-               className="w-full h-9 bg-[#1a1a1a] border border-white/[0.08] text-zinc-100 placeholder:text-zinc-600 px-3 rounded-lg text-[13px] focus:outline-none focus:border-white/[0.2] transition-colors"
+               className="w-full h-11 bg-[#1a1a1a] border border-white/[0.08] text-zinc-100 placeholder:text-zinc-600 px-4 rounded-xl text-[14px] focus:outline-none focus:border-white/[0.2] transition-colors shadow-sm"
+               placeholder="Enter a name for your agent"
              />
           </div>
         </div>
 
-        {/* Step 3: Activation */}
+        {/* Activation */}
         <div className="relative">
           <button
             onClick={onActivate}
-            disabled={isActivating || accountDetail.length < 3}
+            disabled={isActivating || agentName.length < 3}
             className={`w-full py-3.5 rounded-xl font-semibold text-[15px] flex items-center justify-center gap-2 transition-all ${
-              isActivating || accountDetail.length < 3
+              isActivating || agentName.length < 3
                 ? "bg-emerald-500/50 text-white/70 cursor-not-allowed"
                 : "bg-emerald-500 hover:bg-emerald-400 active:scale-[0.99] text-white shadow-lg shadow-emerald-500/10"
             }`}
@@ -163,7 +125,7 @@ export default function StepActivate({
             )}
           </button>
           <p className="text-[12px] text-zinc-600 text-center mt-3">
-            Your agent will run for the first time at its scheduled time.
+            Your agent will be activated and start its schedule immediately.
           </p>
         </div>
 

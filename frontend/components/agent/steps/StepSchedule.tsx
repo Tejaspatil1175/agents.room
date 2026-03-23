@@ -133,8 +133,10 @@ export default function StepSchedule({ schedule, setSchedule }: StepScheduleProp
                 onChange={handleMinuteChange}
                 className="appearance-none bg-[#1a1a1a] border border-white/[0.08] text-zinc-100 rounded-xl pl-4 pr-10 py-2.5 text-[14px] focus:outline-none focus:border-white/[0.2] transition-colors cursor-pointer"
               >
-                {["00", "15", "30", "45"].map(m => (
-                  <option key={m} value={m}>{m}</option>
+                {[...Array(60)].map((_, i) => (
+                  <option key={i} value={i.toString().padStart(2, '0')}>
+                    {i.toString().padStart(2, '0')}
+                  </option>
                 ))}
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-zinc-500">

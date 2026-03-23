@@ -6,7 +6,7 @@ const agentSchema = new mongoose.Schema({
   type: { type: String, enum: ['weather', 'news', 'research', 'content'], required: true },
   config: { type: mongoose.Schema.Types.Mixed, required: true },
   schedule_cron: { type: String, required: true },
-  channel: { type: String, enum: ['whatsapp', 'email', 'slack', 'telegram'], required: true },
+  channel: { type: String, default: null },
   status: { type: String, enum: ['active', 'paused'], default: 'active' },
   is_public: { type: Boolean, default: false }
 }, { timestamps: true });

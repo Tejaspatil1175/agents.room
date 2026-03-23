@@ -60,7 +60,7 @@ export const api = {
       type: 'weather' | 'news' | 'research' | 'content'
       config: Record<string, any>
       schedule_cron: string
-      channel: 'email' | 'whatsapp' | 'telegram' | 'slack'
+      channel: 'email' | 'whatsapp' | 'telegram' | 'slack' | null
     }) =>
       apiFetch<any>('/agents', { method: 'POST', body: JSON.stringify(data) }),
 

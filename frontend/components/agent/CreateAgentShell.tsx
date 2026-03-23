@@ -7,7 +7,6 @@ import AgentStepIndicator from "./AgentStepIndicator";
 import AgentWizardNav from "./AgentWizardNav";
 import StepTask from "./steps/StepTask";
 import StepSchedule from "./steps/StepSchedule";
-import StepDelivery from "./steps/StepDelivery";
 import StepActivate from "./steps/StepActivate";
 import { templates } from "./steps/StepTask";
 import { api, scheduleToCron, templateToAgentPayload } from "@/lib/api";
@@ -30,8 +29,6 @@ export default function CreateAgentShell() {
     days: ["mon", "tue", "wed", "thu", "fri", "sat", "sun"],
   });
 
-  const [delivery, setDelivery] = useState<string | null>(null);
-  const [accountDetail, setAccountDetail] = useState("");
   const [isActivating, setIsActivating] = useState(false);
 
   // Validation Logic
@@ -39,20 +36,18 @@ export default function CreateAgentShell() {
     switch (currentStep) {
       case 0: // Task
         if (taskMode === "template") return selectedTemplate !== null;
-        return taskDescription.length > 10;
+        return taskDescription.length > 5;
       case 1: // Schedule
         return true; 
-      case 2: // Delivery
-        return delivery !== null;
-      case 3: // Activate
-        return accountDetail.length >= 3;
+      case 2: // Activate
+        return agentName.length >= 3;
       default:
         return false;
     }
   };
 
   const handleNext = () => {
-    if (currentStep < 3 && canProceed()) {
+    if (currentStep < 2 && canProceed()) {
       setDirection(1);
       setTimeout(() => setCurrentStep((prev) => prev + 1), 10);
     }
@@ -66,37 +61,38 @@ export default function CreateAgentShell() {
   };
 
   const handleActivate = async () => {
-  setIsActivating(true);
-  try {
-  const cron = scheduleToCron(schedule);
-  const channel = (delivery || "email") as "email" | "whatsapp" | "telegram" | "slack";
+    setIsActivating(true);
+    try {
+      const cron = scheduleToCron(schedule);
+      
+      let payload;
+      if (taskMode === "template" && selectedTemplate) {
+        const tpl = templates.find(t => t.id === selectedTemplate);
+        const channel = tpl?.channel || null;
+        payload = templateToAgentPayload(selectedTemplate, agentName, channel || "email", cron);
+        if (!channel) payload.channel = null;
+      } else {
+        payload = {
+          name: agentName || "My Agent",
+          type: "content" as const,
+          config: {
+            topic: taskDescription,
+            format: "newsletter",
+            tone: "professional",
+          },
+          schedule_cron: cron,
+          channel: null,
+        };
+      }
 
-  let payload;
-  if (taskMode === "template" && selectedTemplate) {
-  payload = templateToAgentPayload(selectedTemplate, agentName, channel, cron);
-  } else {
-  // custom task — map to content agent
-  payload = {
-  name: agentName || "My Agent",
-  type: "content" as const,
-  config: {
-  topic: taskDescription,
-  format: "newsletter",
-  tone: "professional",
-  },
-  schedule_cron: cron,
-  channel,
-  };
-  }
-
-  await api.agents.create(payload);
-  await new Promise((resolve) => setTimeout(resolve, 800));
-  router.push("/dashboard");
-  } catch {
-  setTimeout(() => {
-  router.push("/dashboard");
-  }, 800);
-  }
+      await api.agents.create(payload);
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      router.push("/dashboard");
+    } catch {
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 800);
+    }
   };
 
   // Animation variants
@@ -134,8 +130,6 @@ export default function CreateAgentShell() {
       case 1:
         return <StepSchedule schedule={schedule} setSchedule={setSchedule} />;
       case 2:
-        return <StepDelivery delivery={delivery} setDelivery={setDelivery} />;
-      case 3:
         const tplIcon = 
           taskMode === "template" && selectedTemplate 
             ? templates.find(t => t.id === selectedTemplate)?.icon 
@@ -152,9 +146,7 @@ export default function CreateAgentShell() {
                 : taskDescription
             }
             schedule={schedule}
-            delivery={delivery}
-            accountDetail={accountDetail}
-            setAccountDetail={setAccountDetail}
+            delivery={null}
             agentName={agentName}
             setAgentName={setAgentName}
             isActivating={isActivating}
@@ -193,11 +185,11 @@ export default function CreateAgentShell() {
       {/* Bottom Nav */}
       <AgentWizardNav
         currentStep={currentStep}
-        totalSteps={4}
+        totalSteps={3}
         onNext={handleNext}
         onBack={handleBack}
         isNextDisabled={!canProceed()}
-        isLastStep={currentStep === 3}
+        isLastStep={currentStep === 2}
       />
       
     </div>

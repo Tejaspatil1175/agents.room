@@ -8,8 +8,7 @@ export default function AgentStepIndicator({ currentStep }: AgentStepIndicatorPr
   const steps = [
     { label: "Task", step: 0 },
     { label: "Schedule", step: 1 },
-    { label: "Delivery", step: 2 },
-    { label: "Activate", step: 3 },
+    { label: "Activate", step: 2 },
   ];
 
   return (
