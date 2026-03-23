@@ -10,7 +10,7 @@ import StepSchedule from "./steps/StepSchedule";
 import StepDelivery from "./steps/StepDelivery";
 import StepActivate from "./steps/StepActivate";
 import { templates } from "./steps/StepTask";
-import { api } from "@/lib/api";
+import { api, scheduleToCron, templateToAgentPayload } from "@/lib/api";
 
 export default function CreateAgentShell() {
   const router = useRouter();
@@ -66,22 +66,37 @@ export default function CreateAgentShell() {
   };
 
   const handleActivate = async () => {
-    setIsActivating(true);
-    try {
-      await api.agents.create({
-        name: agentName,
-        taskDescription,
-        schedule,
-        delivery: delivery!,
-        accountDetail,
-      });
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      router.push("/dashboard");
-    } catch {
-      setTimeout(() => {
-        router.push("/dashboard");
-      }, 1500);
-    }
+  setIsActivating(true);
+  try {
+  const cron = scheduleToCron(schedule);
+  const channel = (delivery || "email") as "email" | "whatsapp" | "telegram" | "slack";
+
+  let payload;
+  if (taskMode === "template" && selectedTemplate) {
+  payload = templateToAgentPayload(selectedTemplate, agentName, channel, cron);
+  } else {
+  // custom task — map to content agent
+  payload = {
+  name: agentName || "My Agent",
+  type: "content" as const,
+  config: {
+  topic: taskDescription,
+  format: "newsletter",
+  tone: "professional",
+  },
+  schedule_cron: cron,
+  channel,
+  };
+  }
+
+  await api.agents.create(payload);
+  await new Promise((resolve) => setTimeout(resolve, 800));
+  router.push("/dashboard");
+  } catch {
+  setTimeout(() => {
+  router.push("/dashboard");
+  }, 800);
+  }
   };
 
   // Animation variants

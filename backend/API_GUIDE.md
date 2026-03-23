@@ -422,6 +422,7 @@ A channel = delivery destination for agent output. One per type per user.
 ---
 
 ### POST `/channels/connect/email` `AUTH`
+> **Note:** Connecting any channel will automatically send a welcome message to verify the connection.
 
 **Request Body:**
 ```json
@@ -481,6 +482,24 @@ A channel = delivery destination for agent output. One per type per user.
 **Response `200`:** Channel object with `type: "slack"`.
 
 ---
+
+### GET `/channels/test/:type` `AUTH`
+Send a manual connectivity test message to an already connected channel.
+
+**Example:** `GET /channels/test/telegram`
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "message": "Test message sent to telegram"
+}
+```
+
+**Errors:**
+| Status | Message |
+|--------|---------|
+| 404 | `telegram channel not connected` |
 
 ### DELETE `/channels/:type` `AUTH`
 Remove a connected channel. `:type` = `email`, `telegram`, `whatsapp`, or `slack`.

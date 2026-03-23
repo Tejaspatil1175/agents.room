@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 const links = {
-  Product: ["Features", "Templates", "Marketplace", "Pricing", "Changelog"],
+  Product: ["Features", "Templates", "Marketplace", "Changelog"],
   Developers: ["Documentation", "API Reference", "GitHub", "Status"],
   Company: ["About", "Blog", "Privacy", "Terms"],
 };
@@ -9,7 +9,7 @@ const links = {
 export default function Footer() {
   return (
     <footer className="border-t border-zinc-100 pt-14 pb-8">
-      <div className="max-w-[1120px] mx-auto px-6">
+      <div className="max-w-[1440px] mx-auto px-6">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-14">
 
           {/* Brand */}

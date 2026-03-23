@@ -59,7 +59,7 @@ export default function Pricing() {
 
   return (
     <section id="pricing" className="py-24 lg:py-32 overflow-x-hidden">
-      <div className="max-w-[1120px] mx-auto px-6">
+      <div className="max-w-[1440px] mx-auto px-6">
 
         {/* Header */}
         <AnimatedSection className="text-center max-w-lg mx-auto mb-12" y={20} duration={0.6}>

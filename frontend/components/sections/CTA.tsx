@@ -5,7 +5,7 @@ import AnimatedSection from "@/components/ui/AnimatedSection";
 export default function CTA() {
   return (
     <section className="py-24 lg:py-32 bg-zinc-50/50">
-      <div className="max-w-[1120px] mx-auto px-6">
+      <div className="max-w-[1440px] mx-auto px-6">
         <AnimatedSection y={24} duration={0.7} threshold={0.2}>
           <div className="relative bg-zinc-900 rounded-3xl px-8 py-16 md:px-16 text-center overflow-hidden">
             {/* Subtle top edge line */}

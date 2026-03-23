@@ -1,89 +1,49 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import StatsRow from "./StatsRow";
 import AgentList from "./AgentList";
 import ActivityFeed, { ActivityItem } from "./ActivityFeed";
 import { Agent } from "./AgentCard";
 import { api } from "@/lib/api";
+import { getAuthUser } from "@/lib/auth";
 
-// Mock Data
-const initialMockAgents: Agent[] = [
-  {
-    id: "1",
-    name: "Morning Finance Briefing",
-    description: "Crypto + stocks digest",
-    status: "active",
-    channel: "whatsapp",
-    schedule: "Daily at 8:00 AM",
-    lastRun: "2 min ago",
-    lastRunStatus: "success",
-    runsToday: 1,
-    icon: "💹",
-  },
-  {
-    id: "2",
-    name: "Job Hunt Agent",
-    description: "New listings filtered by role",
-    status: "active",
-    channel: "email",
-    schedule: "Daily at 9:00 AM",
-    lastRun: "1 hr ago",
-    lastRunStatus: "success",
-    runsToday: 1,
-    icon: "🎯",
-  },
-  {
-    id: "3",
-    name: "Research Digest",
-    description: "AI news summarized daily",
-    status: "active",
-    channel: "telegram",
-    schedule: "Daily at 7:30 PM",
-    lastRun: "5 hrs ago",
+function mapApiAgent(a: any): Agent {
+  const channelIconMap: Record<string, string> = {
+    weather: "🌤",
+    news: "📰",
+    research: "🔍",
+    content: "✍️",
+  };
+  return {
+    id: a._id,
+    name: a.name,
+    description: `${a.type} agent — ${a.channel}`,
+    status: a.status === "active" ? "active" : "paused",
+    channel: a.channel,
+    schedule: a.schedule_cron,
+    lastRun: a.updatedAt ? new Date(a.updatedAt).toLocaleString() : "Never",
     lastRunStatus: "success",
     runsToday: 0,
-    icon: "🔍",
-  },
-  {
-    id: "4",
-    name: "Health Check",
-    description: "Daily workout + meal plan",
-    status: "paused",
-    channel: "whatsapp",
-    schedule: "Daily at 7:00 AM",
-    lastRun: "2 days ago",
-    lastRunStatus: "success",
-    runsToday: 0,
-    icon: "🏃",
-  },
-  {
-    id: "5",
-    name: "Content Writer",
-    description: "LinkedIn posts drafted daily",
-    status: "error",
-    channel: "email",
-    schedule: "Daily at 10:00 AM",
-    lastRun: "3 hrs ago",
-    lastRunStatus: "error",
-    runsToday: 1,
-    icon: "✍️",
-  },
-];
+    icon: channelIconMap[a.type] || "🤖",
+  };
+}
 
-const mockActivity: ActivityItem[] = [
-  { agentName: "Morning Finance Briefing", status: "success", time: "2 min ago", channel: "whatsapp" },
-  { agentName: "Content Writer", status: "error", time: "3 hrs ago", channel: "email" },
-  { agentName: "Job Hunt Agent", status: "success", time: "1 hr ago", channel: "email" },
-  { agentName: "Research Digest", status: "success", time: "5 hrs ago", channel: "telegram" },
-  { agentName: "Morning Finance Briefing", status: "success", time: "Yesterday 8:00 AM", channel: "whatsapp" },
-  { agentName: "Job Hunt Agent", status: "success", time: "Yesterday 9:00 AM", channel: "email" },
-  { agentName: "Health Check", status: "success", time: "2 days ago", channel: "whatsapp" },
-];
+function mapRunToActivity(run: any, agentName: string): ActivityItem {
+  return {
+    agentName,
+    status: run.status === "success" ? "success" : "error",
+    time: run.ran_at ? new Date(run.ran_at).toLocaleString() : "",
+    channel: "",
+  };
+}
 
 export default function DashboardShell() {
-  const [agents, setAgents] = useState<Agent[]>(initialMockAgents);
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [activity, setActivity] = useState<ActivityItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const user = getAuthUser();
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -92,55 +52,74 @@ export default function DashboardShell() {
     return "Good evening";
   };
 
-  const activeCount = agents.filter(a => a.status === "active").length;
+  useEffect(() => {
+    async function load() {
+      try {
+        const res: any = await api.agents.list();
+        const mapped: Agent[] = (res.data || []).map(mapApiAgent);
+        setAgents(mapped);
+
+        const recentRuns: ActivityItem[] = [];
+        for (const agent of (res.data || []).slice(0, 5)) {
+          try {
+            const runsRes: any = await api.runs.listByAgent(agent._id);
+            const runs = (runsRes.data || []).slice(0, 2);
+            runs.forEach((run: any) => {
+              recentRuns.push(mapRunToActivity(run, agent.name));
+            });
+          } catch {
+            // skip if run fetch fails for one agent
+          }
+        }
+        setActivity(recentRuns);
+      } catch {
+        // keep empty state
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  const activeCount = agents.filter((a) => a.status === "active").length;
 
   const handleDelete = async (id: string) => {
     try {
       await api.agents.delete(id);
-      setAgents(prev => prev.filter(a => a.id !== id));
-    } catch (e) {
-      // mock fallback
-      setAgents(prev => prev.filter(a => a.id !== id));
+    } catch {
+      // continue regardless
     }
+    setAgents((prev) => prev.filter((a) => a.id !== id));
   };
 
   const handleToggleStatus = async (id: string) => {
-    const agent = agents.find(a => a.id === id);
+    const agent = agents.find((a) => a.id === id);
     if (!agent) return;
-    
     try {
       if (agent.status === "paused") {
         await api.agents.resume(id);
       } else {
         await api.agents.pause(id);
       }
-      setAgents(prev => prev.map(a => {
-        if (a.id === id) {
-          return { ...a, status: a.status === "paused" ? "active" : "paused" };
-        }
-        return a;
-      }));
-    } catch (e) {
-      // mock fallback
-      setAgents(prev => prev.map(a => {
-        if (a.id === id) {
-          return { ...a, status: a.status === "paused" ? "active" : "paused" };
-        }
-        return a;
-      }));
+    } catch {
+      // continue regardless
     }
+    setAgents((prev) =>
+      prev.map((a) =>
+        a.id === id ? { ...a, status: a.status === "paused" ? "active" : "paused" } : a
+      )
+    );
   };
 
   return (
     <div className="w-full max-w-[1200px] mx-auto px-6 pt-10 pb-20">
-      {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4 sm:gap-0">
         <div>
           <h1 className="text-[22px] font-bold text-zinc-100 tracking-tight mb-1">
             Dashboard
           </h1>
           <p className="text-[14px] text-zinc-400">
-            {getGreeting()}. {activeCount} agents are running.
+            {getGreeting()}{user?.name ? `, ${user.name}` : ""}. {loading ? "Loading..." : `${activeCount} agents running.`}
           </p>
         </div>
         <Link
@@ -151,17 +130,19 @@ export default function DashboardShell() {
         </Link>
       </div>
 
-      {/* Stats Row */}
       <StatsRow />
 
-      {/* Main Two-Column Layout */}
       <div className="flex flex-col md:flex-row gap-8 lg:gap-14 border-t border-white/[0.04] pt-8">
-        <AgentList 
-          agents={agents} 
-          onDelete={handleDelete} 
-          onToggleStatus={handleToggleStatus} 
-        />
-        <ActivityFeed items={mockActivity} />
+        {loading ? (
+          <div className="flex-1 text-zinc-500 text-[14px] pt-4">Loading agents...</div>
+        ) : (
+          <AgentList
+            agents={agents}
+            onDelete={handleDelete}
+            onToggleStatus={handleToggleStatus}
+          />
+        )}
+        <ActivityFeed items={activity} />
       </div>
     </div>
   );

@@ -1,13 +1,11 @@
-// API base URL — swap this when backend is ready
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
 
-// Auth token helper
 function getAuthToken(): string | null {
   if (typeof window === 'undefined') return null
   return localStorage.getItem('auth_token')
 }
 
-function authHeaders() {
+function authHeaders(): Record<string, string> {
   const token = getAuthToken()
   return {
     'Content-Type': 'application/json',
@@ -15,99 +13,172 @@ function authHeaders() {
   }
 }
 
-// Generic fetch wrapper
-async function apiFetch<T>(
-  endpoint: string,
-  options?: RequestInit
-): Promise<T> {
+async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
-    headers: { ...authHeaders(), ...options?.headers },
+    headers: { ...authHeaders(), ...(options?.headers as Record<string, string> || {}) },
   })
+  const json = await res.json().catch(() => ({ success: false, message: 'Request failed' }))
   if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: 'Request failed' }))
-    throw new Error(error.message || 'Request failed')
+    throw new Error(json.message || 'Request failed')
   }
-  return res.json()
+  return json
 }
 
 export const api = {
   // AUTH
   auth: {
     login: (email: string, password: string) =>
-      apiFetch('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
-    signup: (name: string, email: string, password: string) =>
-      apiFetch('/auth/signup', { method: 'POST', body: JSON.stringify({ name, email, password }) }),
+      apiFetch<any>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
+
+    register: (name: string, email: string, password: string, timezone?: string) =>
+      apiFetch<any>('/auth/register', { method: 'POST', body: JSON.stringify({ name, email, password, timezone: timezone || 'Asia/Kolkata' }) }),
+
+    me: () =>
+      apiFetch<any>('/auth/me'),
+
     logout: () =>
-      apiFetch('/auth/logout', { method: 'POST' }),
-    googleOAuth: () => {
-      window.location.href = `${API_BASE}/auth/google`
-    },
+      apiFetch<any>('/auth/logout', { method: 'POST' }),
+
+    saveGroqKey: (groq_api_key: string) =>
+      apiFetch<any>('/auth/groq-key', { method: 'PUT', body: JSON.stringify({ groq_api_key }) }),
+
+    deleteGroqKey: () =>
+      apiFetch<any>('/auth/groq-key', { method: 'DELETE' }),
   },
 
   // AGENTS
   agents: {
     list: () =>
-      apiFetch('/agents'),
+      apiFetch<any>('/agents'),
+
     get: (id: string) =>
-      apiFetch(`/agents/${id}`),
+      apiFetch<any>(`/agents/${id}`),
+
     create: (data: {
       name: string
-      taskDescription: string
-      schedule: object
-      delivery: string
-      accountDetail: string
+      type: 'weather' | 'news' | 'research' | 'content'
+      config: Record<string, any>
+      schedule_cron: string
+      channel: 'email' | 'whatsapp' | 'telegram' | 'slack'
     }) =>
-      apiFetch('/agents', { method: 'POST', body: JSON.stringify(data) }),
-    update: (id: string, data: Partial<{ name: string; taskDescription: string; schedule: object }>) =>
-      apiFetch(`/agents/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+      apiFetch<any>('/agents', { method: 'POST', body: JSON.stringify(data) }),
+
+    update: (id: string, data: Partial<{
+      name: string
+      type: string
+      config: Record<string, any>
+      schedule_cron: string
+      channel: string
+    }>) =>
+      apiFetch<any>(`/agents/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+
     delete: (id: string) =>
-      apiFetch(`/agents/${id}`, { method: 'DELETE' }),
+      apiFetch<any>(`/agents/${id}`, { method: 'DELETE' }),
+
     pause: (id: string) =>
-      apiFetch(`/agents/${id}/pause`, { method: 'POST' }),
+      apiFetch<any>(`/agents/${id}/pause`, { method: 'POST' }),
+
     resume: (id: string) =>
-      apiFetch(`/agents/${id}/resume`, { method: 'POST' }),
+      apiFetch<any>(`/agents/${id}/resume`, { method: 'POST' }),
+
+    runNow: (id: string) =>
+      apiFetch<any>(`/agents/${id}/run-now`, { method: 'POST' }),
   },
 
   // RUNS
   runs: {
-    list: (agentId: string) =>
-      apiFetch(`/agents/${agentId}/runs`),
-    getOutput: (agentId: string, runId: string) =>
-      apiFetch(`/agents/${agentId}/runs/${runId}/output`),
+    listByAgent: (agentId: string) =>
+      apiFetch<any>(`/runs/agent/${agentId}`),
+
+    get: (runId: string) =>
+      apiFetch<any>(`/runs/${runId}`),
+  },
+
+  // CHANNELS
+  channels: {
+    connectEmail: (email: string) =>
+      apiFetch<any>('/channels/connect/email', { method: 'POST', body: JSON.stringify({ email }) }),
+
+    connectWhatsapp: (phone: string) =>
+      apiFetch<any>('/channels/connect/whatsapp', { method: 'POST', body: JSON.stringify({ phone }) }),
+
+    connectTelegram: (chat_id: string) =>
+      apiFetch<any>('/channels/connect/telegram', { method: 'POST', body: JSON.stringify({ chat_id }) }),
+
+    connectSlack: (webhook_url: string) =>
+      apiFetch<any>('/channels/connect/slack', { method: 'POST', body: JSON.stringify({ webhook_url }) }),
+
+    disconnect: (type: 'email' | 'whatsapp' | 'telegram' | 'slack') =>
+      apiFetch<any>(`/channels/${type}`, { method: 'DELETE' }),
+
+    test: (type: 'email' | 'whatsapp' | 'telegram' | 'slack') =>
+      apiFetch<any>(`/channels/test/${type}`),
   },
 
   // MARKETPLACE
   marketplace: {
     list: () =>
-      apiFetch('/marketplace'),
-    install: (templateId: string) =>
-      apiFetch(`/marketplace/${templateId}/install`, { method: 'POST' }),
-  },
+      apiFetch<any>('/marketplace'),
 
-  // USER
-  user: {
-    getProfile: () =>
-      apiFetch('/user/profile'),
-    updateProfile: (data: { name: string; email: string; timezone: string }) =>
-      apiFetch('/user/profile', { method: 'PATCH', body: JSON.stringify(data) }),
-    updatePreferences: (data: object) =>
-      apiFetch('/user/preferences', { method: 'PATCH', body: JSON.stringify(data) }),
-    deleteAccount: () =>
-      apiFetch('/user', { method: 'DELETE' }),
-  },
+    publish: (agentId: string) =>
+      apiFetch<any>(`/marketplace/publish/${agentId}`, { method: 'POST' }),
 
-  // CHANNELS
-  channels: {
-    connect: (channel: string, detail: string) =>
-      apiFetch('/channels/connect', { method: 'POST', body: JSON.stringify({ channel, detail }) }),
-    disconnect: (channel: string) =>
-      apiFetch(`/channels/${channel}`, { method: 'DELETE' }),
+    install: (agentId: string, data: { schedule_cron: string; channel: string }) =>
+      apiFetch<any>(`/marketplace/install/${agentId}`, { method: 'POST', body: JSON.stringify(data) }),
   },
+}
 
-  // ONBOARDING
-  onboarding: {
-    complete: (data: { timezone: string; channel: string; templateId: string }) =>
-      apiFetch('/onboarding/complete', { method: 'POST', body: JSON.stringify(data) }),
-  },
+// Helper: convert wizard schedule state to cron expression
+export function scheduleToCron(schedule: {
+  frequency: string
+  time: string
+  days?: string[]
+}): string {
+  const [h, m] = schedule.time.split(':')
+  const hour = parseInt(h)
+  const minute = parseInt(m)
+
+  switch (schedule.frequency) {
+    case 'daily':
+      return `${minute} ${hour} * * *`
+    case 'weekdays':
+      return `${minute} ${hour} * * 1-5`
+    case 'weekly':
+      return `${minute} ${hour} * * 1`
+    case 'hourly':
+      return `0 * * * *`
+    default:
+      return `${minute} ${hour} * * *`
+  }
+}
+
+// Helper: map template ID to backend agent type + config
+export function templateToAgentPayload(templateId: string, agentName: string, channel: string, schedule_cron: string) {
+  const channelMap: Record<string, string> = {
+    whatsapp: 'whatsapp',
+    email: 'email',
+    telegram: 'telegram',
+    slack: 'slack',
+  }
+  const ch = (channelMap[channel.toLowerCase()] || 'email') as 'email' | 'whatsapp' | 'telegram' | 'slack'
+
+  const templateMap: Record<string, { type: 'weather' | 'news' | 'research' | 'content'; config: Record<string, any> }> = {
+    '1': { type: 'news', config: { topic: 'finance crypto stocks', language: 'en' } },
+    '2': { type: 'research', config: { topic: 'remote job listings software engineer', depth: 'advanced' } },
+    '3': { type: 'research', config: { topic: 'artificial intelligence news', depth: 'advanced' } },
+    '4': { type: 'content', config: { topic: 'LinkedIn post about productivity', format: 'LinkedIn post', tone: 'professional' } },
+    '5': { type: 'content', config: { topic: 'health workout meal plan', format: 'newsletter', tone: 'inspirational' } },
+    '6': { type: 'news', config: { topic: 'gmail email productivity', language: 'en' } },
+  }
+
+  const tpl = templateMap[templateId] || { type: 'research' as const, config: { topic: agentName, depth: 'advanced' } }
+
+  return {
+    name: agentName,
+    type: tpl.type,
+    config: tpl.config,
+    schedule_cron,
+    channel: ch,
+  }
 }

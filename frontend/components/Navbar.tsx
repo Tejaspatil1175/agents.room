@@ -7,7 +7,6 @@ import Link from "next/link";
 const navLinks = [
   { label: "Features", href: "#features" },
   { label: "Templates", href: "#templates" },
-  { label: "Pricing", href: "#pricing" },
   { label: "Changelog", href: "#" },
 ];
 
@@ -28,13 +27,15 @@ export default function Navbar() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
-      className={`fixed top-0 inset-x-0 z-50 transition-all duration-200 ${
+      className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 w-[95%] max-w-[1440px] border border-emerald-500/20 shadow-sm overflow-hidden ${
+        mobileOpen ? "rounded-[2rem]" : "rounded-full"
+      } ${
         scrolled
-          ? "bg-white/80 backdrop-blur-xl border-b border-zinc-200"
-          : "bg-transparent"
+          ? "bg-white/90 backdrop-blur-xl border-emerald-500/40 shadow-md"
+          : "bg-white/70 backdrop-blur-xl"
       }`}
     >
-      <nav className="max-w-[1120px] mx-auto px-6 h-[56px] flex items-center justify-between">
+      <nav className="max-w-[1440px] mx-auto px-6 h-[56px] flex items-center justify-between">
 
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0">
@@ -97,7 +98,7 @@ export default function Navbar() {
           mobileOpen ? "max-h-[320px]" : "max-h-0"
         }`}
       >
-        <div className="px-6 pb-5 pt-1 bg-white border-t border-zinc-100">
+        <div className="px-6 pb-5 pt-1 border-t border-emerald-500/10">
           <div className="flex flex-col gap-0.5 mb-4">
             {navLinks.map(({ label, href }) => (
               <Link

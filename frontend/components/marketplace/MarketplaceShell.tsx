@@ -1,51 +1,70 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import MarketplaceFilters, { Template } from "./MarketplaceFilters";
 import MarketplaceCard from "./MarketplaceCard";
 import { api } from "@/lib/api";
 
-const mockTemplates: Template[] = [
-  { id: "1", name: "Morning Finance Briefing", description: "Get daily crypto, stocks, and market news summarized and sent to your phone every morning.", category: "Finance", channel: "whatsapp", installs: 4200, rating: 4.8, author: "agents.room", icon: "💹", featured: true },
-  { id: "2", name: "Job Hunt Agent", description: "Scrapes top job boards daily, filters by your criteria, and sends matching listings to your inbox.", category: "Jobs", channel: "email", installs: 3100, rating: 4.7, author: "rahul_dev", icon: "🎯", featured: true },
-  { id: "3", name: "Research Digest", description: "Searches the web on any topic you choose and sends a clean daily summary.", category: "Research", channel: "email", installs: 2800, rating: 4.6, author: "agents.room", icon: "🔍", featured: false },
-  { id: "4", name: "Health Coach Agent", description: "Sends personalized daily workout plans and meal ideas based on your fitness goals.", category: "Health", channel: "whatsapp", installs: 1900, rating: 4.5, author: "fitlife_ai", icon: "🏃", featured: false },
-  { id: "5", name: "LinkedIn Content Writer", description: "Drafts 3 LinkedIn posts daily on your chosen topics, ready to copy and post.", category: "Content", channel: "email", installs: 2100, rating: 4.4, author: "contentpro", icon: "✍️", featured: false },
-  { id: "6", name: "Crypto Alert Agent", description: "Monitors price movements and sends instant alerts when your coins hit target prices.", category: "Finance", channel: "telegram", installs: 3400, rating: 4.9, author: "crypto_watcher", icon: "📈", featured: true },
-  { id: "7", name: "Gmail Summarizer", description: "Reads your inbox daily and sends a clean summary of important emails plus draft replies.", category: "Productivity", channel: "slack", installs: 1600, rating: 4.3, author: "agents.room", icon: "📬", featured: false },
-  { id: "8", name: "News Digest", description: "Curates top news from your favorite sources and delivers a morning briefing.", category: "Research", channel: "telegram", installs: 2200, rating: 4.5, author: "newsbot_ai", icon: "📰", featured: false },
-  { id: "9", name: "Sleep Tracker Coach", description: "Sends nightly wind-down routines and morning energy reports based on your schedule.", category: "Health", channel: "whatsapp", installs: 980, rating: 4.2, author: "wellbeing_ai", icon: "😴", featured: false },
-  { id: "10", name: "Twitter/X Thread Writer", description: "Generates daily Twitter thread ideas and drafts on topics you care about.", category: "Content", channel: "email", installs: 1750, rating: 4.4, author: "viral_ai", icon: "🐦", featured: false },
-  { id: "11", name: "DeFi Yield Tracker", description: "Monitors DeFi protocols for the best yield opportunities and sends daily reports.", category: "Web3", channel: "telegram", installs: 890, rating: 4.1, author: "defi_agent", icon: "⛓️", featured: false },
-  { id: "12", name: "Study Buddy Agent", description: "Sends daily study schedules, flashcard prompts, and progress reminders for students.", category: "Productivity", channel: "whatsapp", installs: 1200, rating: 4.3, author: "studybot", icon: "📚", featured: false },
+const fallbackTemplates: Template[] = [
+{ id: "1", name: "Morning Finance Briefing", description: "Get daily crypto, stocks, and market news summarized and sent to your phone every morning.", category: "Finance", channel: "whatsapp", installs: 4200, rating: 4.8, author: "agents.room", icon: "💹", featured: true },
+{ id: "2", name: "Job Hunt Agent", description: "Scrapes top job boards daily, filters by your criteria, and sends matching listings to your inbox.", category: "Jobs", channel: "email", installs: 3100, rating: 4.7, author: "rahul_dev", icon: "🎯", featured: true },
+{ id: "3", name: "Research Digest", description: "Searches the web on any topic you choose and sends a clean daily summary.", category: "Research", channel: "email", installs: 2800, rating: 4.6, author: "agents.room", icon: "🔍", featured: false },
+{ id: "4", name: "Health Coach Agent", description: "Sends personalized daily workout plans and meal ideas based on your fitness goals.", category: "Health", channel: "whatsapp", installs: 1900, rating: 4.5, author: "fitlife_ai", icon: "🏃", featured: false },
+{ id: "5", name: "LinkedIn Content Writer", description: "Drafts 3 LinkedIn posts daily on your chosen topics, ready to copy and post.", category: "Content", channel: "email", installs: 2100, rating: 4.4, author: "contentpro", icon: "✍️", featured: false },
+{ id: "6", name: "Crypto Alert Agent", description: "Monitors price movements and sends instant alerts when your coins hit target prices.", category: "Finance", channel: "telegram", installs: 3400, rating: 4.9, author: "crypto_watcher", icon: "📈", featured: true },
 ];
 
 const CATEGORIES = ["All", "Research", "Finance", "Health", "Content", "Jobs", "Web3", "Productivity"];
 
+function mapApiToTemplate(a: any): Template {
+return {
+id: a._id,
+name: a.name,
+description: `${a.type} agent`,
+category: a.type.charAt(0).toUpperCase() + a.type.slice(1),
+channel: a.channel,
+installs: 0,
+rating: 5.0,
+author: a.user_id?.name || "Community",
+icon: "🤖",
+featured: false,
+};
+}
+
 export default function MarketplaceShell() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState("All");
-  const [installedIds, setInstalledIds] = useState<Set<string>>(new Set());
+const [templates, setTemplates] = useState<Template[]>(fallbackTemplates);
+const [searchQuery, setSearchQuery] = useState("");
+const [activeCategory, setActiveCategory] = useState("All");
+const [installedIds, setInstalledIds] = useState<Set<string>>(new Set());
 
-  const handleInstall = async (id: string) => {
-    try {
-      await api.marketplace.install(id);
-      setInstalledIds((prev) => {
-        const next = new Set(prev);
-        next.add(id);
-        return next;
-      });
-    } catch {
-      // Mock fallback
-      setInstalledIds((prev) => {
-        const next = new Set(prev);
-        next.add(id);
-        return next;
-      });
-    }
-  };
+useEffect(() => {
+async function load() {
+try {
+const res: any = await api.marketplace.list();
+if (res?.data?.length > 0) {
+setTemplates([...fallbackTemplates, ...res.data.map(mapApiToTemplate)]);
+}
+} catch {
+// keep fallback templates
+}
+}
+load();
+}, []);
 
-  const filteredTemplates = mockTemplates.filter((template) => {
+const handleInstall = async (id: string) => {
+try {
+await api.marketplace.install(id, { schedule_cron: "0 8 * * *", channel: "email" });
+} catch {
+// continue regardless
+}
+setInstalledIds((prev) => {
+const next = new Set(prev);
+next.add(id);
+return next;
+});
+};
+
+  const filteredTemplates = templates.filter((template) => {
     const matchesSearch = 
       template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       template.description.toLowerCase().includes(searchQuery.toLowerCase());

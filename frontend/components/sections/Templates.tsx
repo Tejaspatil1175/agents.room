@@ -74,7 +74,7 @@ export default function Templates() {
 
   return (
     <section id="templates" className="py-24 lg:py-32 bg-zinc-50/50">
-      <div className="max-w-[1120px] mx-auto px-6">
+      <div className="max-w-[1440px] mx-auto px-6">
 
         {/* Header */}
         <AnimatedSection

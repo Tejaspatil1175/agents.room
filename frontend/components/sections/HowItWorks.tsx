@@ -137,7 +137,7 @@ function StepBlock({ step, index }: { step: typeof steps[0]; index: number }) {
 export default function HowItWorks() {
   return (
     <section id="features" className="py-24 lg:py-32">
-      <div className="max-w-[1120px] mx-auto px-6">
+      <div className="max-w-[1440px] mx-auto px-6">
 
         {/* Header */}
         <AnimatedSection className="max-w-xl mb-20" y={20} duration={0.6} threshold={0.3}>

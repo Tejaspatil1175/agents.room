@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import GoogleButton from "./GoogleButton";
 import { api } from "@/lib/api";
-import { setAuthToken } from "@/lib/auth";
+import { setAuthToken, setAuthUser } from "@/lib/auth";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -50,17 +50,16 @@ export default function LoginForm() {
     setIsLoading(true);
 
     try {
-      const response: any = await api.auth.login(formData.email, formData.password);
-      if (response && response.token) {
-        setAuthToken(response.token);
-      }
-      router.push("/dashboard");
-    } catch (error) {
-      // Mock fallback — remove when backend is ready
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      router.push("/dashboard");
+    const response: any = await api.auth.login(formData.email, formData.password);
+    if (response?.data?.token) {
+    setAuthToken(response.data.token);
+    setAuthUser(response.data.user);
+    }
+    router.push("/dashboard");
+    } catch (error: any) {
+    setErrors({ ...newErrors, email: error?.message || "Invalid email or password" });
     } finally {
-      setIsLoading(false);
+    setIsLoading(false);
     }
   };
 

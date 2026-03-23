@@ -19,7 +19,7 @@ export default function LogoStrip() {
   return (
     <AnimatedSection y={0} duration={0.5} threshold={0.3}>
       <section className="border-y border-zinc-100 py-4 overflow-hidden">
-        <div className="max-w-[1120px] mx-auto px-6">
+        <div className="max-w-[1440px] mx-auto px-6">
           <div className="flex items-center gap-6">
             <span className="text-[11px] font-medium uppercase tracking-[0.1em] text-zinc-400 shrink-0">
               Connects with

@@ -1,30 +1,47 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
+import { api } from "@/lib/api";
+import { clearAuthToken, getAuthUser } from "@/lib/auth";
 
 export default function AppNavbar() {
-  const pathname = usePathname();
-  const [isAvatarOpen, setIsAvatarOpen] = useState(false);
-  const avatarDropdownRef = useRef<HTMLDivElement>(null);
+const pathname = usePathname();
+const router = useRouter();
+const [isAvatarOpen, setIsAvatarOpen] = useState(false);
+const avatarDropdownRef = useRef<HTMLDivElement>(null);
+const user = getAuthUser();
 
-  // Close dropdown on outside click
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (avatarDropdownRef.current && !avatarDropdownRef.current.contains(event.target as Node)) {
-        setIsAvatarOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+const initials = user?.name
+? user.name.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2)
+: "U";
 
-  const navLinks = [
-    { name: "Dashboard", href: "/dashboard" },
-    { name: "Marketplace", href: "/marketplace" },
-    { name: "Settings", href: "/settings" },
-  ];
+useEffect(() => {
+function handleClickOutside(event: MouseEvent) {
+if (avatarDropdownRef.current && !avatarDropdownRef.current.contains(event.target as Node)) {
+setIsAvatarOpen(false);
+}
+}
+document.addEventListener("mousedown", handleClickOutside);
+return () => document.removeEventListener("mousedown", handleClickOutside);
+}, []);
+
+const handleLogout = async () => {
+try {
+await api.auth.logout();
+} catch {
+// continue regardless
+}
+clearAuthToken();
+router.push("/login");
+};
+
+const navLinks = [
+{ name: "Dashboard", href: "/dashboard" },
+{ name: "Marketplace", href: "/marketplace" },
+{ name: "Settings", href: "/settings" },
+];
 
   return (
     <nav className="w-full h-14 bg-[#111111] border-b border-white/[0.06] flex items-center justify-between px-6 z-50">

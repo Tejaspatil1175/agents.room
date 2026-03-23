@@ -9,6 +9,7 @@ router.post('/connect/whatsapp', channelsController.connectWhatsapp);
 router.post('/connect/email', channelsController.connectEmail);
 router.post('/connect/slack', channelsController.connectSlack);
 router.post('/connect/telegram', channelsController.connectTelegram);
+router.get('/test/:type', channelsController.testChannel);
 router.delete('/:type', channelsController.deleteChannel);
 
 module.exports = router;

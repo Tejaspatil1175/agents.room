@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import GoogleButton from "./GoogleButton";
 import { api } from "@/lib/api";
+import { setAuthToken, setAuthUser } from "@/lib/auth";
 
 export default function SignupForm() {
   const router = useRouter();
@@ -70,14 +71,16 @@ export default function SignupForm() {
     setIsLoading(true);
 
     try {
-      await api.auth.signup(formData.name, formData.email, formData.password);
-      router.push("/onboarding");
-    } catch (error) {
-      // Mock fallback
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      router.push("/onboarding");
+    const response: any = await api.auth.register(formData.name, formData.email, formData.password);
+    if (response?.data?.token) {
+    setAuthToken(response.data.token);
+    setAuthUser(response.data.user);
+    }
+    router.push("/onboarding");
+    } catch (error: any) {
+    setErrors({ ...newErrors, email: error?.message || "Registration failed" });
     } finally {
-      setIsLoading(false);
+    setIsLoading(false);
     }
   };
 

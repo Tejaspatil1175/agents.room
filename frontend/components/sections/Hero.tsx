@@ -43,9 +43,15 @@ const agents = [
 
 export default function Hero() {
   return (
-    <section className="relative pt-[56px]">
-      <div className="max-w-[1120px] mx-auto px-6 py-20 lg:py-28">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+    <section className="relative overflow-hidden">
+      {/* Grid Background — Light Blue Graph Style */}
+      <div className="absolute inset-0 z-0 h-full w-full bg-white bg-[linear-gradient(to_right,#3b82f615_1px,transparent_1px),linear-gradient(to_bottom,#3b82f615_1px,transparent_1px)] bg-[size:40px_40px]"></div>
+      
+      {/* Subtle Glow to integrate with the theme */}
+      <div className="absolute inset-x-0 top-0 z-0 m-auto h-[300px] w-[600px] rounded-full bg-emerald-400/5 blur-[120px]"></div>
+
+      <div className="relative z-10 max-w-[1440px] mx-auto px-6 pt-[82px] pb-10 lg:pt-[100px] lg:pb-16">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-24 items-center">
 
           {/* LEFT — Copy */}
           <div className="flex flex-col" style={{ willChange: "transform" }}>

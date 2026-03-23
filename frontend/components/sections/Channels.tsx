@@ -48,7 +48,7 @@ export default function Channels() {
 
   return (
     <section className="py-24 lg:py-32">
-      <div className="max-w-[1120px] mx-auto px-6">
+      <div className="max-w-[1440px] mx-auto px-6">
         <div ref={ref} className="grid lg:grid-cols-2 gap-16 items-center">
 
           {/* Left */}
